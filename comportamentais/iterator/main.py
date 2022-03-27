@@ -1,56 +1,54 @@
-class RadioStation:
-    def __init__(self, frequency):
-        self.__frequency = frequency
-
-    @property
-    def frequency(self):
-        return self.__frequency
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from collections.abc import Iterator, Iterable
+from typing import Any
 
 
-class StationList:
-    def __init__(self):
-        self.__stations = list()
-        self.__counter = 0
-
-    def add_station(self, radio_station):
-        self.__stations.append(radio_station)
-
-    def remove_station(self, frequency):
-        for index in range(0, len(self.__stations)):
-            if self.__stations[index].frequency == frequency:
-                self.__stations.pop(index)
-                break
-        else:
-            print('Radio station not found')
-
-    def count(self):
-        return len(self.__stations)
-
-    def current(self):
-        return self.__stations[self.__counter].frequency
-
-    def key(self):
-        return self.__counter
+@dataclass
+class MyIterator(ABC, Iterator):
+    _collection: list[Any]
+    _index = 0
 
     def __next__(self):
-        self.__counter += 1
+        try: 
+            item = self._collection[self._index]
+            self._index = self.to_position()
+            return item
 
-    def rewind(self):
-        self.__counter = 0
+        except IndexError:
+            raise StopIteration
+
+    # Impletado o Padrão Template Method para Iterações customizaveis.
+    @abstractmethod
+    def to_position(self): pass
 
 
-if __name__ == '__main__':
-    station_list = StationList()
+@dataclass
+class ReversedIterator(MyIterator):
+    _index = -1
 
-    station_list.add_station(RadioStation(89))
-    station_list.add_station(RadioStation(101))
-    station_list.add_station(RadioStation(102))
-    station_list.add_station(RadioStation(103.2))
+    def to_position(self):
+        return self._index - 1
 
-    print(f'Stations: {station_list.count()}')
-    station_list.remove_station(89)
-    print(f'Stations: {station_list.count()}')
 
-    print(f'Current Station: {station_list.current()}')
-    next(station_list)
-    print(f'Current Station: {station_list.current()}')
+@dataclass
+class MyList(Iterable):
+    _my_list: list[Any] = field(default=list)
+
+    def __iter__(self) -> Iterator:
+        return MyIterator(self._my_list)
+    
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}({self._my_list})'
+
+    @property
+    def reversed(self):
+        return ReversedIterator(self._my_list)
+
+if __name__ == "__main__":
+    mylist = MyList([1, 2, 3, 4, 5, 6])
+
+    print(mylist)
+
+    for c in mylist.reversed:
+        print(c)

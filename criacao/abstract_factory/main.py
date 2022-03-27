@@ -1,7 +1,7 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 
-class PizzaFactory(metaclass=ABCMeta):
+class PizzaFactory(ABC):
     @abstractmethod
     def create_veg_pizza(self):
         pass
@@ -27,13 +27,13 @@ class USPizzaFactory(PizzaFactory):
         return HamPizza()
 
 
-class VegPizza(metaclass=ABCMeta):
+class VegPizza(ABC):
     @abstractmethod
     def prepare(self, veg_pizza):
         pass
 
 
-class NonVegPizza(metaclass=ABCMeta):
+class NonVegPizza(ABC):
     @abstractmethod
     def serve(self, veg_pizza):
         pass

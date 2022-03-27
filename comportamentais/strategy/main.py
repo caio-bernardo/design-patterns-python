@@ -1,19 +1,48 @@
-from impostos import ICMS, ISS
+from abc import ABC, abstractmethod
 
 
-class CalculadorImpostos:
-    def realiza_calculo(self, orcamento, imposto):
-        imposto_calculado = imposto.calcula(orcamento)
-        print(imposto_calculado)
+class DiscountStrategy(ABC):
+    @abstractmethod
+    def calculate(self, value: float) -> float: pass
 
 
-if __name__ == '__main__':
+class TwentyPercent(DiscountStrategy):
+    def calculate(self, value: float) -> float:
+        return value - (value * 0.2)
 
-    from orcamento import Orcamento
 
-    calculador = CalculadorImpostos()
+class FifthyPercent(DiscountStrategy):
+    def calculate(self, value: float) -> float:
+        return value - (value * 0.5)
 
-    orcamento = Orcamento(500)
 
-    calculador.realiza_calculo(orcamento, ISS())
-    calculador.realiza_calculo(orcamento, ICMS())
+class CustomDiscount(DiscountStrategy):
+    def __init__(self, discount: float):
+        self.discount = discount / 100        
+
+    def calculate(self, value: float) -> float:
+        return value - (value * self.discount)
+
+
+class NoDiscount(DiscountStrategy):
+    def calculate(self, value: float) -> float:
+        return value
+
+
+class Order: # Context
+    def __init__(self, total: float, discount: DiscountStrategy) -> None:
+        self._total = total
+        self._discount = discount  # strategy instance
+    
+    @property
+    def total(self):
+        return self._total
+    
+    @property
+    def total_wth_discount(self):
+        return self._discount.calculate(self.total)
+    
+if __name__ == "__main__":
+    twenty_percent = TwentyPercent()
+    order = Order(1000, twenty_percent)
+    print(order.total, order.total_wth_discount)

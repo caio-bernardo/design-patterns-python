@@ -1,38 +1,63 @@
-from descontos import (
-    DescontoCincoItens,
-    DescontoMaisDeQuinhentosReais,
-    SemDesconto,
-)
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 
 
-class CalculadorDescontos:
-    def calcula(self, orcamento):
-        return DescontoCincoItens(
-            DescontoMaisDeQuinhentosReais(SemDesconto())
-        ).calcula(orcamento)
+@dataclass
+class Handler(ABC):
+    """Classe Abstrata para cada processo de tratamento."""
+    sucessor: Handler
+
+    @abstractmethod
+    def handle(self, letter: str) -> str: pass
 
 
-if __name__ == '__main__':
+@dataclass
+class HandlerABC(Handler):
+    sucessor: Handler = field(repr=False)
+    LETTERS = ['A', 'B', 'C']
 
-    from orcamento import Orcamento, Item
+    def handle(self, letter: str) -> str:
+        if letter in self.LETTERS:
+            return f'{self.__class__.__name__} tratou {letter}.'
+        
+        return self.sucessor.handle(letter)
 
-    orcamento = Orcamento()
+@dataclass
+class HandlerDEF(Handler):
+    sucessor: Handler = field(repr=False)
+    LETTERS = ['D', 'E', 'F']
 
-    orcamento.adiciona_item(Item('item 0', 100.0))
-    orcamento.adiciona_item(Item('item 1', 100.0))
-    orcamento.adiciona_item(Item('item 2', 100.0))
-    orcamento.adiciona_item(Item('item 3', 100.0))
-    orcamento.adiciona_item(Item('item 4', 100.0))
-    orcamento.adiciona_item(Item('item 5', 100.0))
-    orcamento.adiciona_item(Item('item 6', 100.0))
-    orcamento.adiciona_item(Item('item 7', 100.0))
-    orcamento.adiciona_item(Item('item 8', 100.0))
-    orcamento.adiciona_item(Item('item 9', 100.0))
+    def handle(self, letter: str) -> str:
+        if letter in self.LETTERS:
+            return f'{self.__class__.__name__} tratou {letter}.'
+        
+        return self.sucessor.handle(letter)
+        
 
-    print(orcamento.valor)
+@dataclass
+class HandlerUnsolved(Handler):
+    sucessor: Handler = None
 
-    calculator = CalculadorDescontos()
+    def handle(self, letter: str) -> str:
+        return f'Handlers não foram capazes de tratar {letter}.'
 
-    desconto = calculator.calcula(orcamento)
 
-    print(f'Desconto calculado {desconto}')
+if __name__ == "__main__":
+    # Definindo a ordem de processamento
+    handler_unsolved = HandlerUnsolved()
+    handler_def = HandlerDEF(handler_unsolved)
+    handler_abc = HandlerABC(handler_def)
+    
+    # Mandando informações para serem tratadas.
+    print(handler_abc.handle('A'))
+    print(handler_abc.handle('B'))
+    print(handler_abc.handle('C'))
+    
+    print(handler_abc.handle('D'))
+    print(handler_abc.handle('E'))
+    print(handler_abc.handle('F'))
+    
+    print(handler_abc.handle('G'))
+    print(handler_abc.handle('H'))
+    print(handler_abc.handle('I'))

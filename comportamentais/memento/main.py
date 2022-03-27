@@ -1,77 +1,60 @@
-from datetime import date
+from __future__ import annotations
+from copy import deepcopy
+from dataclasses import dataclass, field
 
 
-class Contrato:
-    def __init__(self, data, cliente, tipo):
-        self.data = data
-        self.cliente = cliente
-        self.tipo = tipo
-
-    def avanca(self):
-        if self.tipo == 'NOVO':
-            self.tipo = 'EM ANDAMENTO'
-        elif self.tipo == 'EM ANDAMENTO':
-            self.tipo = 'ACERTADO'
-        elif self.tipo == 'ACERTADO':
-            self.tipo = 'CONCLUIDO'
-
-    def salva_estado(self):
-        # Não podemos passar o self para o Estado pois se o contrato fosse
-        # alterado o estado anterior dele também seria alterado
-        return Estado(
-            Contrato(data=self.data, cliente=self.cliente, tipo=self.tipo)
-        )
-
-    def restaura_estado(self, estado):
-        self.cliente = estado.contrato.cliente
-        self.data = estado.contrato.data
-        self.tipo = estado.contrato.tipo
-
-
-class Estado:
-    def __init__(self, contrato):
-        self.__contrato = contrato
+# É preciso que o Memento seja imutavel, __setattr__ faria isso também.
+@dataclass(frozen=True)
+class Memento:  # The one who remembers
+    _save: dict
 
     @property
-    def contrato(self):
-        return self.__contrato
+    def save(self) -> dict:
+        return self._save
 
 
-class Historico:
-    def __init__(self):
-        self.__estados_salvos = list()
+# Aqui entra o Command
+@dataclass
+class CareTaker: # A brigde for the past and the present
+    _originator: FileEditor
+    _mementos: list[Memento] = field(default_factory=list)
 
-    def obtem_estado(self, indice):
-        return self.__estados_salvos[indice]
+    def backup(self):
+        self._mementos.append(self._originator.save_file())
+    
+    def restore(self):
+        if not self._mementos == []:
+            self._originator.restore(self._mementos.pop())
+        
+        return
 
-    def adiciona_estado(self, estado):
-        self.__estados_salvos.append(estado)
+
+# Originator
+@dataclass
+class FileEditor:  # The one who makes history
+    file_name: str = 'Unnamed'
+    content: str = ''
+
+    def save_file(self) -> Memento:
+         return Memento(deepcopy(self.__dict__))
+
+    def restore(self, memento: Memento):
+        self.__dict__ = memento.save
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    file1 = FileEditor('Titulo1', 'Lorem Ipsum...')
+    caretaker = CareTaker(file1)
+    
+    caretaker.backup()
+    print(file1)
 
-    historico = Historico()
+    print()
 
-    contrato = Contrato(data=date.today(), cliente='Kelvin', tipo='NOVO')
+    file1.file_name = 'Novo Titulo'
+    print(file1)
 
-    contrato.avanca()
+    print()
 
-    historico.adiciona_estado(contrato.salva_estado())
-
-    contrato.avanca()
-
-    contrato.cliente = 'Joao da Silva'
-
-    historico.adiciona_estado(contrato.salva_estado())
-
-    contrato.avanca()
-
-    historico.adiciona_estado(contrato.salva_estado())
-
-    print(contrato.tipo)
-    print(contrato.cliente)
-
-    contrato.restaura_estado(historico.obtem_estado(0))
-
-    print(contrato.tipo)
-    print(contrato.cliente)
+    caretaker.restore()
+    print(file1)

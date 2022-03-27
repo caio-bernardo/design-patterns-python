@@ -1,28 +1,40 @@
-from impostos import ICMS, ICPP, IKCV, ISS
+from abc import ABC, abstractmethod
 
 
-class CalculadorImpostos:
-    def realiza_calculo(self, orcamento, imposto):
-        imposto_calculado = imposto.calcula(orcamento)
-        print(imposto_calculado)
+class Abstract(ABC):
+    def template_method(self): # criado para não ser sobescrito
+        self.hooks()
+        self.operation1()
+        self.operation2()
+
+    # Note que como o hooks não é abstrato suas classes filhas não são
+    #  obrigadas a usar este metodo
+    def hooks(self): pass
+
+    @abstractmethod
+    def operation1(self): pass
+
+    @abstractmethod
+    def operation2(self): pass
+
+class Concrete1(Abstract):
+    def operation1(self):
+        print('Operação 1')
+
+    def operation2(self):
+        print('Operação 2')
+    
+    def hooks(self):
+        print('Usando o hook')
+
+class Concrete2(Abstract):
+    def operation1(self):
+        print('Operação 1 de maneira diferente')
+
+    def operation2(self):
+        print('Operação 2 de maneira diferente')
 
 
-if __name__ == '__main__':
-
-    from orcamento import Orcamento, Item
-
-    orcamento = Orcamento()
-
-    orcamento.adiciona_item(Item('item 0', 50.0))
-    orcamento.adiciona_item(Item('item 1', 200.0))
-    orcamento.adiciona_item(Item('item 2', 250.0))
-
-    calculador = CalculadorImpostos()
-
-    print('ISS e ICMS')
-    calculador.realiza_calculo(orcamento, ISS())
-    calculador.realiza_calculo(orcamento, ICMS())
-
-    print('ICPP e IKCV')
-    calculador.realiza_calculo(orcamento, ICPP())
-    calculador.realiza_calculo(orcamento, IKCV())
+if __name__ == "__main__":
+    c1 = Concrete1()
+    c1.template_method()

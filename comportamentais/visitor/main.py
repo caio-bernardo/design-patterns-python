@@ -1,74 +1,66 @@
-class Subtracao:
-    def __init__(self, expressao_esquerda, expressao_direita):
-        self.__expressao_esquerda = expressao_esquerda
-        self.__expressao_direita = expressao_direita
-
-    def avalia(self):
-        return (
-            self.__expressao_esquerda.avalia()
-            - self.__expressao_direita.avalia()
-        )
-
-    def aceita(self, visitor):
-        visitor.visita_subtracao(self)
-
-    @property
-    def expressao_esquerda(self):
-        return self.__expressao_esquerda
-
-    @property
-    def expressao_direita(self):
-        return self.__expressao_direita
+from __future__ import annotations
+from abc import ABC, abstractmethod
 
 
-class Soma:
-    def __init__(self, expressao_esquerda, expressao_direita):
-        self.__expressao_esquerda = expressao_esquerda
-        self.__expressao_direita = expressao_direita
-
-    def avalia(self):
-        return (
-            self.__expressao_esquerda.avalia()
-            + self.__expressao_direita.avalia()
-        )
-
-    def aceita(self, visitor):
-        visitor.visita_soma(self)
-
-    @property
-    def expressao_esquerda(self):
-        return self.__expressao_esquerda
-
-    @property
-    def expressao_direita(self):
-        return self.__expressao_direita
+class Visitor(ABC):
+    @abstractmethod
+    def visit_component_a(self, element: ComponentA): 
+        pass
+    
+    @abstractmethod
+    def visit_component_b(self, element: ComponentB):
+        pass
 
 
-class Numero:
-    def __init__(self, numero):
-        self.__numero = numero
+class ConcreteVisitor1(Visitor):
+    def visit_component_a(self, element: ComponentA): 
+        print(element.component_a_method(), 'Visitor1')
 
-    def avalia(self):
-        return self.__numero
-
-    def aceita(self, visitor):
-        visitor.visita_numero(self)
+    def visit_component_b(self, element: ComponentB):
+        print(element.component_b_method(), 'Visitor1')
 
 
-if __name__ == '__main__':
+class ConcreteVisitor2(Visitor):
+    def visit_component_a(self, element: ComponentA): 
+        print(element.component_a_method(), 'Visitor2')
 
-    from impressao import Impressao
+    def visit_component_b(self, element: ComponentB):
+        print(element.component_b_method(), 'Visitor2')
 
-    expressao_esquerda = Soma(Numero(10), Numero(20))
-    expressao_direita = Soma(Numero(5), Numero(2))
-    expressao_conta = Soma(expressao_esquerda, expressao_direita)
 
-    impressao = Impressao()
-    expressao_conta.aceita(impressao)
+class Component(ABC):
+    @abstractmethod
+    def accept(self, visitor: Visitor):
+        pass
 
-    print('')
 
-    expressao_esquerda = Subtracao(Numero(100), Numero(20))
-    expressao_direita = Soma(Numero(5), Numero(5))
-    expressao_conta = Soma(expressao_esquerda, expressao_direita)
-    expressao_conta.aceita(impressao)
+class ComponentA(Component):
+    def accept(self, visitor: Visitor):
+        visitor.visit_component_a(self)
+    
+    def component_a_method(self):
+        return 'A'
+
+
+class ComponentB(Component):
+    def accept(self, visitor: Visitor):
+        visitor.visit_component_b(self)
+    
+    def component_b_method(self):
+        return 'B'
+
+
+def client_code(components: list[Component], visitor: Visitor):
+    for component in components:
+        component.accept(visitor)
+
+if __name__ == "__main__":
+    components = (ComponentA(), ComponentB())
+
+    visitor1 = ConcreteVisitor1()
+
+    client_code(components, visitor1)
+
+    visitor2 = ConcreteVisitor2()
+
+    client_code(components, visitor2)

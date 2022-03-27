@@ -1,75 +1,82 @@
-from datetime import date
+from abc import ABC, abstractmethod
+from typing import Dict, List
 
 
-class Item:
-    def __init__(self, descricao, valor):
-        self.__descricao = descricao
-        self.__valor = valor
-
-    @property
-    def descricao(self):
-        return self.__descricao
-
-    @property
-    def valor(self):
-        return self.__valor
+class IObserver(ABC):
+    @abstractmethod
+    def update(self) -> None: pass
 
 
-class NotaFiscal:
-    def __init__(
-        self,
-        razao_social,
-        cnpj,
-        itens,
-        data_de_emissao=date.today(),
-        detalhes='',
-        observadores=list(),
-    ):
-        self.__razao_social = razao_social
-        self.__cnpj = cnpj
-        self.__data_de_emissao = data_de_emissao
-        if len(detalhes) > 20:
-            raise Exception(
-                'Detalhes da nota fiscal nao pode ter mais que 20 chars'
-            )
-        self.__detalhes = detalhes
-        self.__itens = itens
-
-        for observador in observadores:
-            observador(self)
+class IObservable(ABC):
+    """ Observable """
 
     @property
-    def razao_social(self):
-        return self.__razao_social
+    @abstractmethod
+    def state(self): pass
+
+    @abstractmethod
+    def add_observer(self, observer: IObserver) -> None: pass
+
+    @abstractmethod
+    def remove_observer(self, observer: IObserver) -> None: pass
+
+    @abstractmethod
+    def notify_observers(self) -> None: pass
+
+
+class WeatherStation(IObservable):
+    """ Observable """
+    def __init__(self) -> None:
+        self._observers: List[IObserver] = []
+        self._state: Dict = {}
 
     @property
-    def cnpj(self):
-        return self.__cnpj
+    def state(self):
+        return self._state
+    
+    @state.setter
+    def state(self, state_update: Dict) -> None:
+        new_state: Dict = {**self._state, **state_update}
+        if new_state != self._state:
+            self._state = new_state
+            self.notify_observers()
 
-    @property
-    def data_de_emissao(self):
-        return self.__data_de_emissao
+    def add_observer(self, observer: IObserver) -> None:
+        self._observers.append(observer)
 
-    @property
-    def detalhes(self):
-        return self.__detalhes
+    def remove_observer(self, observer: IObserver) -> None:
+        if observer in self._observers:
+            self._observers.remove(observer)
 
-    @property
-    def itens(self):
-        return self.__itens
+    def notify_observers(self) -> None: 
+        for observer in self._observers:
+            observer.update()
+    
+    def reset_state(self):
+        self._state = {}
+        self.notify_observers()
 
 
-if __name__ == '__main__':
+class Smartphone(IObserver):
+    def __init__(self, name, observable: IObservable) -> None:
+        self.name = name
+        self.observable = observable
+    
+    def update(self) -> None:
+        observable_name = self.observable.__class__.__name__ 
+        print(f'{self.name} o objeto {observable_name} atualizado ->\
+         {self.observable.state}')
 
-    from observadores import imprime, envia_por_email, salva_no_banco
 
-    itens = [Item('ITEM A', 100), Item('ITEM B', 200)]
+if __name__ == "__main__":
+    weather_station = WeatherStation()
+    smartphone = Smartphone('samsung', weather_station)
+    other_smartphone = Smartphone('iphone', weather_station)
 
-    nota_fiscal = NotaFiscal(
-        razao_social='FHSA Limitada',
-        cnpj='01928391827321',
-        itens=itens,
-        data_de_emissao=date.today(),
-        detalhes='',
-        observadores=[imprime, envia_por_email, salva_no_banco],
-    )
+    weather_station.add_observer(smartphone)
+    weather_station.add_observer(other_smartphone)
+
+    weather_station.state = {'temperature': '25'}
+    weather_station.state = {'humidity': '67'}
+    weather_station.remove_observer(smartphone)
+    weather_station.reset_state()
